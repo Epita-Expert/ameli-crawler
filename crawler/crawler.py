@@ -4,7 +4,7 @@ import time
 import re
 import json
 import builtins
-import psycopg2
+# import psycopg2
 import requests
 import argparse
 import crawler
@@ -18,8 +18,12 @@ def create_specialities():
     list_url_speciality = re.findall(
         '<a href=\"(/trouver-un-professionnel-de-sante/(.*?))\">', html)[:-1]
     print(list_url_speciality)
+
+    if fast_testing:
+        small_list = [list_url_speciality[0], list_url_speciality[1]]
+
     cur.executemany("insert into speciality values (?, ?)",
-                    list_url_speciality)
+                    small_list)
     cur.execute("select count(*) from speciality")
     con.commit()
     print(f'Inserted {cur.fetchone()[0]} specialities in DB')
@@ -31,7 +35,8 @@ def get_departements_from(url_departement: str, speciality: str):
     html = get(f'{base_url}{url_departement}')
     # tools.progres_bar(count.value+1, len_speciality.value, suffix = 'Progress:', length = 40)
     print(f'{base_url}{url_departement} Done')
-    return [(f'{url_departement}/{res}', f'{res}', speciality) for res in re.findall(f'<li class=\"seo-departement\"> <a href=\"{url_departement}/(.*?)\">', html)]
+    return [(f'{url_departement}/{res}', f'{res}', speciality) for res in
+            re.findall(f'<li class=\"seo-departement\"> <a href=\"{url_departement}/(.*?)\">', html)]
 
 
 def create_departements():
@@ -39,8 +44,9 @@ def create_departements():
     cur.execute("create table if not exists departement (link, name, speciality)")
     cur.execute("select * from speciality")
     list_url_speciality = cur.fetchall()
-    list_list_url_departement = list(get_departements_from(url_speciality[0], url_speciality[1]) for url_speciality in list_url_speciality)
-    list_url_departement = list_list_url_departement.join()
+    list_list_url_departement = list(
+        get_departements_from(url_speciality[0], url_speciality[1]) for url_speciality in list_url_speciality)
+    list_url_departement = [y for x in list_list_url_departement for y in x]
     print(f'Found {len(list_url_departement)} departements')
     cur.executemany("insert into departement values (?,?,?)",
                     list_url_departement)
@@ -48,12 +54,14 @@ def create_departements():
     con.commit()
     print(f'Inserted {cur.fetchone()[0]} departements link in DB')
 
+
 def get_cities_from(url_departement: str):
     print(f'{base_url}{url_departement}')
     html = get(f'{base_url}{url_departement}')
     # tools.progres_bar(count.value+1, len_speciality.value, suffix = 'Progress:', length = 40)
     print(f'{base_url}{url_departement} Done')
-    return [(f'{url_departement}/{res}', '') for res in re.findall(f'<a href=\"{base_url}{url_departement}/(.*?)\">',html)]
+    return [(f'{url_departement}-{res}', '') for res in
+            re.findall(f'<a href=\"{url_departement}-(.*?)\">', html)]
 
     # try:
     #     [url_speciality, url_departement] = url_departement
@@ -70,8 +78,10 @@ def create_cities():
     cur.execute("create table if not exists city (link, name)")
     cur.execute("select * from departement")
     list_url_departement = cur.fetchall()
+    if fast_testing:
+        list_url_departement = list_url_departement[:10]
     list_list_url_city = list(get_cities_from(url_departement[0]) for url_departement in list_url_departement)
-    list_url_city = list_list_url_city.join()
+    list_url_city = [y for x in list_list_url_city for y in x]
     print(f'Found {len(list_url_city)} cities')
     print(list_url_city[0])
     cur.executemany("insert into city values (?,?)",
@@ -89,6 +99,8 @@ def create_cities():
     #     with open(dir(__file__)+'/json/link-pract-ameli.fr.json', 'w') as f:
     #         dumps = json.dumps(list_url_practitioner, ensure_ascii=False)
     #         print(dumps, file=f)
+
+
 def crawler():
     pass
     # get list of city from department
@@ -96,49 +108,35 @@ def crawler():
     # get list of doctors
     # pick random doctors
     # scrap informations
-    
+
+
 def main():
     start = time.time()
-    # create_specialities()
-    # create_departements()
+    #create_specialities()
+    #create_departements()
     create_cities()
 
     # crawler()
-    
+
     timer(start)
 
-class newList(list):
-    def join(self):
-        if self:
-            return [y for x in self for y in x]
-        else:
-            return []
-__builtins__.list = newList
+
+#class newList(list):
+#    def join(self):
+#        if self:
+#            return [y for x in self for y in x]
+#        else:
+#            return []
+
+
+#__builtins__.list = newList
 
 if __name__ == '__main__':
     base_url = "http://annuairesante.ameli.fr/"
-    
+    fast_testing = True
     con = sqlite3.connect("db.sqlite3")
     # con = psycopg2.connect("dbname=ameli_db user=root password=root")
     cur = con.cursor()
 
-    r = redis.Redis(host='localhost', port=6379, db=0)
-
-    redis_graph = Graph('ameli', r)
-
-    doctor = {'name': 'Nathan Podesta', }
-    doctor_node = Node(label='doctor', properties=doctor)
-    redis_graph.add_node(doctor_node)
-
-    speciality = {'name': 'gastro-enterologue-et-hepatologue'}
-    speciality_node = Node(label='speciality', properties=speciality)
-    redis_graph.add_node(speciality_node)
-
-    edge = Edge(doctor_node, 'have', speciality_node, properties={})
-    redis_graph.add_edge(edge)
-
-    redis_graph.commit()
-
     main()
-
     con.close()
