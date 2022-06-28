@@ -27,7 +27,18 @@ L'approche par le crawling permettra de découvrir au fur et à mesure le site e
 La majeure partie du temps le programme attend le retour des appels web, les performances du langages n'auront que peu d'impact sur la vitesse d'exécution. Nous avons donc choisi Python pour sa simplicité de syntaxe et d'exécution. C'est aussi le langage le plus utilisé pour le web scraping/crawling. De plus, il possède de nombreuses librairies compatibles qui vont nous permettre de nous connecter à une base ou encore de générer des graphes.
 Afin de stocker nos données temporairement, nous avons utilisé SQLite, c'est un système de base de données qui a la particularité de fonctionner sans serveur, l'intérêt c'est que c'est très léger et rapide à mettre en place. Dans notre cas nous allons y stocker les données intermédiaires de chacune de nos étapes de manière structurée. Le principal avantage est de repartir de l'état dans lequel le programme s’est arrêté. Cela évite aussi de surcharger des variables qui vont ralentir l'exécution. C'est une mémoire persistante en quelque sorte.
 Récupérer des information et les stocker c'est bien mais savoir les représenter c'est encore mieux. Pour cela nous allons utiliser Redis Graph,  Redis est un serveur de cache de données et Redis Graph permet de stocker des graph dans un cache.
- 
+
+## Generation du corpus
+
+Pour la génération du corpus, nous allons commencer par récupérer toutes les spécialités présente sur ce lien http://annuairesante.ameli.fr/trouver-un-professionnel-de-sante/.
+
+```python
+html = get(f'{base_url}/trouver-un-professionnel-de-sante/')
+list_url_speciality = re.findall('<a href=\"(/trouver-un-professionnel-de-sante/(.*?))\">', html)[:-1]
+specialities = [Speciality(url_speciality[1], url_speciality[0]) for url_speciality in list_url_speciality
+```
+
+Puis ensuite notre crawler fera le reste du travail.
 ## Description de l'algorithme
 Nous avons implémenté un surfeur aléatoire dans notre crawler. Cet algorithme est basé sur la notion de probabilité. En effet, nous avons une probabilité de 0.5 de choisir une URL dans la liste des URLs à crawler. Si nous avons une probabilité de 0.5, alors nous avons une chance sur deux de choisir une URL dans la liste des URLs à crawler.
 Après avoir construit notre corpus, nous avons décidé à chaque tour de boucle de choisir un nombre aléatoirement entre 0 et 1. Si ce nombre est égal à 1, alors nous allons choisir une URL dans la liste des URLs des docteurs de la spécialité et de la région qu'on est en train de crawler. Si ce nombre est égal à 0, alors nous allons choisir une URL au hasard dans la liste des URLs des spécialités puis de la même manière chosir un département puis une ville puis un docteur aléatoirement afin de stocker en base le nom du docteur.
@@ -83,7 +94,6 @@ Ces données récupérées vont nous permettre ensuite d'aller récupérer les n
 /professionnels-de-sante/fiche-detaillee-brafine-eddy-CbU1kDMxMDC0 | BRAFINE EDDY | /trouver-un-professionnel-de-sante/oto-rhino-laryngologue-%28orl%29-et-chirurgien-cervico-facial/972-martinique-fort-de-france
 
 Grâce à notre crawler nous allons donc pouvoir récupérer tous les noms des docteurs de chaque spécialité de manière aléatoire.
- 
 ## Représentation des données par un graph
  
 Pour la démonstration nous allons créer un graph qui représentera le lien entre les spécialités et un département (Ain).
