@@ -92,6 +92,6 @@ Pour la démonstration nous allons créer un graph qui représentera le lien ent
 
 
 # Todo:
-- Check if url already exists
-- Generate the graph
-- Add Redis Search
+- [x] Check if url already exists
+- [ ] Generate the graph in live
+- [ ] Add Redis Search
