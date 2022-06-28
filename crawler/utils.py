@@ -6,15 +6,15 @@ from random import randint
 import requests
 from socket import timeout
 
-def get(url):
+def get(url, count=1):
     try:
-
         html = request.urlopen(url, timeout=15).read().decode('utf-8')
         html = re.sub("(\r\n|\n|\r|\t)", " ", html)
         html = re.sub("  +", " ", html)
     except timeout:
-        print("timeout")
-        return get(url)
+        print(f'Timeout: {count}x')
+        count += 1
+        return get(url, count)
     except Exception as e:
         print(e)
         return get(url)
@@ -23,17 +23,26 @@ def get(url):
     return html
 
 
-def get2(url):
+# 
+def get_with_headers(url):
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.115 Safari/537.36',
         'Host': 'annuairesante.ameli.fr',
         # 'Cookie': cookie
     }
-    html = requests.get(url, headers=headers)
-    html = html.text
-    html = re.sub("(\r\n|\n|\r|\t)", " ", html)
-    html = re.sub("  +", " ", html)
+    try:
+        # html = requests.get(url, headers=headers)
+        html = request.get(url, timeout=15, headers=headers)
+        html = html.text
+        html = re.sub("(\r\n|\n|\r|\t)", " ", html)
+        html = re.sub("  +", " ", html)
+    except timeout:
+        print("timeout")
+        return get(url)
+    except Exception as e:
+        print(e)
+        return get(url)
     return html
 
 
