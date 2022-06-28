@@ -83,13 +83,14 @@ Ces données récupérées vont nous permettre ensuite d'aller récupérer les n
 /professionnels-de-sante/fiche-detaillee-brafine-eddy-CbU1kDMxMDC0 | BRAFINE EDDY | /trouver-un-professionnel-de-sante/oto-rhino-laryngologue-%28orl%29-et-chirurgien-cervico-facial/972-martinique-fort-de-france
 
 Grâce à notre crawler nous allons donc pouvoir récupérer tous les noms des docteurs de chaque spécialité de manière aléatoire.
-
-## Generation du corpus
- 
  
 ## Représentation des données par un graph
  
-Pour la démonstration nous allons créer un graph qui représentera la distribution des médecins par départements.
+Pour la démonstration nous allons créer un graph qui représentera le lien entre les spécialités et un département (Ain).
+
+![image](https://user-images.githubusercontent.com/45274627/176322566-5e4056b3-3ee2-410c-804e-4cf81e290f5b.png)
+
+
 # Todo:
 - Check if url already exists
 - Generate the graph
