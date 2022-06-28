@@ -48,7 +48,6 @@ class Doctor:
         return (self.path, self.name, self.department_path)
 
 def create_specialities():
-    cur.execute("create table if not exists speciality (link, name)")
 
     cur.execute("select count(*) from speciality") 
 
@@ -107,7 +106,6 @@ def crawler(do_it, doctors: List[Doctor]):
         ## Department
         # Get departments
 
-        cur.execute("create table if not exists departement (link, name, speciality_link)")
         departments = get_departements_from(speciality.path, speciality.name)
         print(f'Found {len(departments)} departements')
         time.sleep(1)
@@ -122,7 +120,6 @@ def crawler(do_it, doctors: List[Doctor]):
         ## City
         # Get cities
 
-        cur.execute("create table if not exists city (link, name, department_link)")
         cities = get_cities_from(department.path)
         print(f'Found {len(cities)} cities')
         time.sleep(1)        
@@ -135,7 +132,6 @@ def crawler(do_it, doctors: List[Doctor]):
         time.sleep(1)
         # Get doctors
 
-        cur.execute("create table if not exists doctor (link, name, department_link)")
         doctors = get_doctors_from(city.path)
         print(f'Found {len(doctors)} doctors')
 
@@ -143,6 +139,14 @@ def crawler(do_it, doctors: List[Doctor]):
     # Get Random doctors
 
     doctor = random.choice(doctors)
+
+    # Check if already exist
+    cur.execute("select * from doctor where link=:link ", {"link": doctor.path})
+    found_doctor = cur.fetchone()
+    if (found_doctor):
+        print(f'{doctor.path} already exist')
+        print('On repart a zero !')
+        return crawler(do_it=True, doctors=[])
 
     # Get doctor information
 
@@ -155,15 +159,21 @@ def crawler(do_it, doctors: List[Doctor]):
     # Continue
     if (random.randint(0,1) == 1):
         print('On continue !')
-        crawler(do_it=False, doctors=doctors)
+        return crawler(do_it=False, doctors=doctors)
     else:
         print('On repart a zero !')
-        crawler(do_it=True, doctors=[])
+        return crawler(do_it=True, doctors=[])
 
 
 def main():
     start = time.time()
+    cur.execute("create table if not exists speciality (link, name)")
+    cur.execute("create table if not exists departement (link, name, speciality_link)")
+    cur.execute("create table if not exists city (link, name, department_link)")
+    cur.execute("create table if not exists doctor (link, name, department_link)")
+    con.commit()
     create_specialities()
+
     crawler(do_it=True, doctors=[])
     timer(start)
 
